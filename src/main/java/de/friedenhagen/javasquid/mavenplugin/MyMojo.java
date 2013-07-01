@@ -15,54 +15,55 @@ package de.friedenhagen.javasquid.mavenplugin;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import java.io.File;
+import java.nio.charset.Charset;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.sonar.graph.DirectedGraph;
+import org.sonar.java.JavaConfiguration;
+import org.sonar.java.JavaSquid;
+import org.sonar.squid.api.CodeVisitor;
+import org.sonar.squid.api.SourceCode;
+import org.sonar.squid.api.SourceCodeEdge;
 
 /**
  * Goal which touches a timestamp file.
  */
-@Mojo(name = "touch", defaultPhase = LifecyclePhase.PROCESS_RESOURCES)
-public class MyMojo
-        extends AbstractMojo {
+@Mojo(name = "touch", defaultPhase = LifecyclePhase.VERIFY)
+public class MyMojo extends AbstractMojo {
+
+    /**
+     * Charset of the source files.
+     */
+    @Parameter(defaultValue = "UTF-8", property = "project.build.sourceEncoding", required = true)
+    private String sourceEncoding;
+
+    /**
+     * Location of the sources.
+     */
+    @Parameter(property = "project.build.sourceDirectory", required = true, readonly = true)
+    private File sourceDirectory;
 
     /**
      * Location of the file.
      */
-    @Parameter(defaultValue = "${project.build.directory}", required = true)
+    @Parameter(property = "project.build.outputDirectory", required = true, readonly = true)
     private File outputDirectory;
 
-    public void execute()
-            throws MojoExecutionException {
-        File f = outputDirectory;
-
-        if (!f.exists()) {
-            f.mkdirs();
-        }
-
-        File touch = new File(f, "touch.txt");
-
-        FileWriter w = null;
-        try {
-            w = new FileWriter(touch);
-
-            w.write("touch.txt");
-        } catch (IOException e) {
-            throw new MojoExecutionException("Error creating file " + touch, e);
-        } finally {
-            if (w != null) {
-                try {
-                    w.close();
-                } catch (IOException e) {
-                    // ignore
-                }
-            }
+    public void execute() throws MojoExecutionException {
+        final JavaSquid squid = new JavaSquid(new JavaConfiguration(Charset.forName(sourceEncoding)), new CodeVisitor[0]);
+        squid.scanDirectories(Collections.singleton(sourceDirectory), Collections.singleton(outputDirectory));
+        final DirectedGraph<SourceCode, SourceCodeEdge> graph = squid.getGraph();
+        final Set<SourceCode> vertices = graph.getVertices();
+        List<SourceCodeEdge> edges = graph.getEdges(vertices);
+        for (SourceCodeEdge edge : edges) {
+            System.err.printf("%s:%d%n", edge.toString(), edge.getWeight());
         }
     }
 }
