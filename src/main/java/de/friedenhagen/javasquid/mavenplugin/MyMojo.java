@@ -61,7 +61,9 @@ public class MyMojo extends AbstractMojo {
         squid.scanDirectories(Collections.singleton(sourceDirectory), Collections.singleton(outputDirectory));
         final DirectedGraph<SourceCode, SourceCodeEdge> graph = squid.getGraph();
         final Set<SourceCode> vertices = graph.getVertices();
+        System.err.println("vertices.size:" + vertices.size());
         List<SourceCodeEdge> edges = graph.getEdges(vertices);
+        System.err.println("edges.size:" + edges.size());
         for (SourceCodeEdge edge : edges) {
             System.err.printf("%s:%d%n", edge.toString(), edge.getWeight());
         }
