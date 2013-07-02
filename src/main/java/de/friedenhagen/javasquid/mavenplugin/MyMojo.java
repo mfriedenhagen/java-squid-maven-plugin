@@ -58,6 +58,8 @@ public class MyMojo extends AbstractMojo {
 
     public void execute() throws MojoExecutionException {
         final JavaSquid squid = new JavaSquid(new JavaConfiguration(Charset.forName(sourceEncoding)), new CodeVisitor[0]);
+        getLog().info("sourceDirectory:" + sourceDirectory);
+        getLog().info("outputDirectory:" + outputDirectory);
         squid.scanDirectories(Collections.singleton(sourceDirectory), Collections.singleton(outputDirectory));
         final DirectedGraph<SourceCode, SourceCodeEdge> graph = squid.getGraph();
         final Set<SourceCode> vertices = graph.getVertices();
