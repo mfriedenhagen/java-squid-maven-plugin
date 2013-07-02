@@ -28,9 +28,11 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.sonar.graph.DirectedGraph;
 import org.sonar.java.JavaConfiguration;
 import org.sonar.java.JavaSquid;
+import org.sonar.squid.api.CheckMessage;
 import org.sonar.squid.api.CodeVisitor;
 import org.sonar.squid.api.SourceCode;
 import org.sonar.squid.api.SourceCodeEdge;
+import org.sonar.squid.indexer.SquidIndex;
 
 /**
  * Goal which touches a timestamp file.
@@ -64,10 +66,14 @@ public class MyMojo extends AbstractMojo {
         final DirectedGraph<SourceCode, SourceCodeEdge> graph = squid.getGraph();
         final Set<SourceCode> vertices = graph.getVertices();
         System.err.println("vertices.size:" + vertices.size());
+        for (SourceCode sourceCode : vertices) {
+            Set<CheckMessage> checkMessages = sourceCode.getCheckMessages();
+            getLog().info("checkMessages:" + checkMessages);
+        }
         List<SourceCodeEdge> edges = graph.getEdges(vertices);
         System.err.println("edges.size:" + edges.size());
         for (SourceCodeEdge edge : edges) {
             System.err.printf("%s:%d%n", edge.toString(), edge.getWeight());
-        }
+        }               
     }
 }
